@@ -1,0 +1,130 @@
+# ------------------------------------------------------------
+# AIM:
+# To implement a Recursive Descent Parser in Python
+# for the given grammar and check whether a string is valid.
+# ------------------------------------------------------------
+
+# ------------------- GRAMMAR -------------------
+# E  -> T E'
+# E' -> + T E' | ε
+# T  -> F T'
+# T' -> * F T' | ε
+# F  -> ( E ) | i
+# ------------------------------------------------
+
+SUCCESS = 1
+FAILED = 0
+
+cursor = 0
+string = ""
+
+# Function to get current character
+def current_char():
+    global cursor
+    if cursor < len(string):
+        return string[cursor]
+    return '\0'
+
+# ------------------- E -> T E' -------------------
+def E():
+    global cursor
+    print(f"{string[cursor:]:<16} E -> T E'")
+    
+    if T():
+        if Edash():
+            return SUCCESS
+        else:
+            return FAILED
+    else:
+        return FAILED
+
+# ------------------- E' -> + T E' | ε -------------------
+def Edash():
+    global cursor
+    
+    if current_char() == '+':
+        print(f"{string[cursor:]:<16} E' -> + T E'")
+        cursor += 1
+        
+        if T():
+            if Edash():
+                return SUCCESS
+            else:
+                return FAILED
+        else:
+            return FAILED
+    else:
+        print(f"{string[cursor:]:<16} E' -> ε")
+        return SUCCESS
+
+# ------------------- T -> F T' -------------------
+def T():
+    global cursor
+    print(f"{string[cursor:]:<16} T -> F T'")
+    
+    if F():
+        if Tdash():
+            return SUCCESS
+        else:
+            return FAILED
+    else:
+        return FAILED
+
+# ------------------- T' -> * F T' | ε -------------------
+def Tdash():
+    global cursor
+    
+    if current_char() == '*':
+        print(f"{string[cursor:]:<16} T' -> * F T'")
+        cursor += 1
+        
+        if F():
+            if Tdash():
+                return SUCCESS
+            else:
+                return FAILED
+        else:
+            return FAILED
+    else:
+        print(f"{string[cursor:]:<16} T' -> ε")
+        return SUCCESS
+
+# ------------------- F -> ( E ) | i -------------------
+def F():
+    global cursor
+    
+    if current_char() == '(':
+        print(f"{string[cursor:]:<16} F -> ( E )")
+        cursor += 1
+        
+        if E():
+            if current_char() == ')':
+                cursor += 1
+                return SUCCESS
+            else:
+                return FAILED
+        else:
+            return FAILED
+    
+    elif current_char() == 'i':
+        print(f"{string[cursor:]:<16} F -> i")
+        cursor += 1
+        return SUCCESS
+    
+    else:
+        return FAILED
+
+# ------------------- MAIN FUNCTION -------------------
+if __name__ == "__main__":
+    string = input("Enter the string: ")
+    cursor = 0
+
+    print("\nInput Action")
+    print("--------------------------------")
+
+    if E() and cursor == len(string):
+        print("--------------------------------")
+        print("String is successfully parsed")
+    else:
+        print("--------------------------------")
+        print("Error in parsing String")

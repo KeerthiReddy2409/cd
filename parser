@@ -1,0 +1,61 @@
+import re, sys
+
+class Number:
+    def __init__(self, value):
+        self.value = value
+    def __repr__(self):
+        return f"Number({self.value})"
+
+class Call:
+    def __init__(self, op, args):
+        self.op = op
+        self.args = args
+    def __repr__(self):
+        return f"Call('{self.op}', {self.args})"
+
+def tokenize(code):
+    return re.findall(r'\d+|[()+\-*/]', code)
+
+def parse(tokens):
+    token = tokens.pop(0)
+    if token.isdigit():
+        return Number(int(token))
+    if token == '(':
+        op = tokens.pop(0)
+        args = []
+        while tokens[0] != ')':
+            args.append(parse(tokens))
+        tokens.pop(0)
+        return Call(op, args)
+
+def eval_ast(node):
+    if isinstance(node, Number):
+        return node.value
+
+    vals = [eval_ast(a) for a in node.args]
+
+    if node.op == '+':
+        return sum(vals)
+    if node.op == '-':
+        return -vals[0] if len(vals) == 1 else vals[0] - sum(vals[1:])
+    if node.op == '*':
+        r = 1
+        for v in vals:
+            r *= v
+        return r
+    if node.op == '/':
+        r = vals[0]
+        for v in vals[1:]:
+            r /= v
+        return r
+
+def run_file(filename):
+    with open(filename) as f:
+        tokens = tokenize(f.read())
+        while tokens:
+            ast = parse(tokens)
+            print("AST:", ast)
+            print("Result:", eval_ast(ast))
+
+if __name__ == "__main__":
+    run_file(sys.argv[1])
