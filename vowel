@@ -1,0 +1,26 @@
+%{
+#include <stdio.h>
+%}
+
+%%
+[aeiouAEIOU] { printf("%-5s - %-15s\n", yytext, "VOWEL"); }
+[a-zA-Z]     { printf("%-5s - %-15s\n", yytext, "CONSONANT"); }
+\n           ;
+.            ;
+%%
+
+int main()
+{
+    printf("Enter a character: ");
+    yylex();
+    return 0;
+}
+
+int yywrap()
+{
+    return 1;
+}
+
+#lex file.l
+#gcc lex.yy.c -o output -lfl
+#./output

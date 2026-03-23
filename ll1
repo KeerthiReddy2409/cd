@@ -1,0 +1,151 @@
+# LL(1) Parser Implementation
+# Computes FIRST, FOLLOW and Parsing Table
+
+# ---------- INPUT ----------
+productions = []
+non_terminals = set()
+
+n = int(input("Enter number of productions: "))
+print("Enter productions (Example: E=TR or R=#):")
+
+for _ in range(n):
+    prod = input().replace(" ", "")
+    productions.append(prod)
+    non_terminals.add(prod[0])
+
+# ---------- FIRST SET ----------
+first = {nt: set() for nt in non_terminals}
+
+def find_first(symbol):
+    # If terminal, return itself
+    if symbol not in non_terminals:
+        return {symbol}
+
+    result = set()
+
+    for prod in productions:
+        if prod[0] == symbol:
+            rhs = prod[2:]
+
+            # epsilon case
+            if rhs == "#":
+                result.add("#")
+            else:
+                for char in rhs:
+                    char_first = find_first(char)
+                    result.update(char_first - {"#"})
+
+                    if "#" not in char_first:
+                        break
+                else:
+                    result.add("#")
+
+    return result
+
+# Compute FIRST sets
+for nt in non_terminals:
+    first[nt] = find_first(nt)
+
+print("\nFIRST Sets:")
+for nt in sorted(non_terminals):
+    print(f"FIRST({nt}) = {{ {', '.join(sorted(first[nt]))} }}")
+
+# ---------- FOLLOW SET ----------
+follow = {nt: set() for nt in non_terminals}
+
+def find_follow(symbol):
+    # Start symbol gets $
+    if symbol == productions[0][0]:
+        follow[symbol].add("$")
+
+    for prod in productions:
+        lhs = prod[0]
+        rhs = prod[2:]
+
+        for i in range(len(rhs)):
+            if rhs[i] == symbol:
+
+                # Case 1: Not last symbol
+                if i + 1 < len(rhs):
+                    next_symbol = rhs[i + 1]
+                    next_first = find_first(next_symbol)
+
+                    follow[symbol].update(next_first - {"#"})
+
+                    if "#" in next_first and lhs != symbol:
+                        find_follow(lhs)
+                        follow[symbol].update(follow[lhs])
+
+                # Case 2: Last symbol
+                else:
+                    if lhs != symbol:
+                        find_follow(lhs)
+                        follow[symbol].update(follow[lhs])
+
+# Compute FOLLOW sets
+for nt in non_terminals:
+    find_follow(nt)
+
+print("\nFOLLOW Sets:")
+for nt in sorted(non_terminals):
+    print(f"FOLLOW({nt}) = {{ {', '.join(sorted(follow[nt]))} }}")
+
+# ---------- PARSING TABLE ----------
+terminals = set()
+
+for prod in productions:
+    rhs = prod[2:]
+    for ch in rhs:
+        if ch not in non_terminals and ch != "#":
+            terminals.add(ch)
+
+terminals.add("$")
+
+# Initialize table
+parsing_table = {
+    nt: {t: "" for t in terminals}
+    for nt in non_terminals
+}
+
+# Fill table
+for prod in productions:
+    lhs = prod[0]
+    rhs = prod[2:]
+
+    first_rhs = set()
+
+    if rhs == "#":
+        first_rhs.add("#")
+    else:
+        for ch in rhs:
+            ch_first = find_first(ch)
+            first_rhs.update(ch_first - {"#"})
+
+            if "#" not in ch_first:
+                break
+        else:
+            first_rhs.add("#")
+
+    # Rule 1: FIRST
+    for terminal in first_rhs - {"#"}:
+        parsing_table[lhs][terminal] = prod
+
+    # Rule 2: FOLLOW if epsilon
+    if "#" in first_rhs:
+        for terminal in follow[lhs]:
+            parsing_table[lhs][terminal] = prod
+
+# ---------- PRINT TABLE ----------
+print("\nLL(1) Parsing Table:\n")
+
+print(f"{'NT/T':<10}", end="")
+for t in sorted(terminals):
+    print(f"{t:<10}", end="")
+print()
+
+for nt in sorted(non_terminals):
+    print(f"{nt:<10}", end="")
+    for t in sorted(terminals):
+        entry = parsing_table[nt][t]
+        print(f"{entry:<10}", end="")
+    print()

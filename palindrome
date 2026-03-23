@@ -1,0 +1,86 @@
+#palindrome.l
+
+%{
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "y.tab.h"
+%}
+
+%%
+[a-zA-Z]+  { yylval.str = strdup(yytext); return STR; }
+[ \t\n]    ;
+.          ;
+%%
+
+int yywrap() {
+    return 1;
+}
+
+#palindrome.y
+
+%{
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+int yylex();
+void yyerror(char *msg);
+%}
+
+%union{
+    char* str;
+}
+
+%token <str> STR
+%type <str> E
+
+%%
+S : E
+{
+    int flag = 0;
+    int i, k;
+
+    k = strlen($1) - 1;
+
+    for(i = 0; i <= k/2; i++)
+    {
+        if($1[i] != $1[k-i])
+        {
+            flag = 1;
+            break;
+        }
+    }
+
+    if(flag)
+        printf("Not Palindrome\n");
+    else
+        printf("Palindrome\n");
+
+    printf("String = %s\n", $1);
+}
+;
+
+E : STR { $$ = $1; }
+;
+%%
+
+void yyerror(char *msg)
+{
+    printf("Error: %s\n", msg);
+}
+
+int main()
+{
+    printf("Enter a string:\n");
+    yyparse();
+    return 0;
+}
+
+
+#run
+
+// lex filename.l
+// yacc -d filename.y
+// gcc lex.yy.c y.tab.c -o output
+// ./output

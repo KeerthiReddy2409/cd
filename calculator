@@ -1,0 +1,66 @@
+#calc.l
+
+%{
+#include "y.tab.h"
+#include <stdlib.h>
+%}
+
+%%
+[0-9]+    { yylval = atoi(yytext); return NUMBER; }
+[ \t]     ;
+\n        return '\n';
+.         return yytext[0];
+%%
+
+int yywrap() {
+    return 1;
+}
+
+#calc.y
+
+%{
+#include <stdio.h>
+#include <stdlib.h>
+
+int yylex();
+void yyerror(char *s);
+%}
+
+%token NUMBER
+%left '+' '-'
+%left '*'
+
+%%
+input:
+      | input line
+      ;
+
+line:
+      '\n'
+    | exp '\n' { printf("Result = %d\n", $1); }
+    ;
+
+exp:
+      NUMBER         { $$ = $1; }
+    | exp '+' exp    { $$ = $1 + $3; }
+    | exp '-' exp    { $$ = $1 - $3; }
+    | exp '*' exp    { $$ = $1 * $3; }
+    ;
+%%
+
+void yyerror(char *s){
+    printf("Error: %s\n", s);
+}
+
+int main(){
+    printf("Enter expression:\n");
+    yyparse();
+    return 0;
+}
+
+#run
+
+// lex filename.l
+// yacc -d filename.y
+// gcc lex.yy.c y.tab.c -o output
+// ./output

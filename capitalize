@@ -1,0 +1,49 @@
+%{
+#include <stdio.h>
+#include <ctype.h>
+%}
+
+%x COMMENT
+
+%%
+"//".* {
+    int i;
+    for (i = 0; yytext[i]; i++)
+        putchar(toupper(yytext[i]));
+}
+
+"/*" {
+    BEGIN(COMMENT);
+    putchar('/');
+    putchar('*');
+}
+
+<COMMENT>"*/" {
+    putchar('*');
+    putchar('/');
+    BEGIN(INITIAL);
+}
+
+<COMMENT>.|\n {
+    putchar(toupper(yytext[0]));
+}
+
+.|\n {
+    putchar(yytext[0]);
+}
+%%
+
+int main()
+{
+    yylex();
+    return 0;
+}
+
+int yywrap()
+{
+    return 1;
+}
+
+#lex file.l
+#gcc lex.yy.c -o output -lfl
+#./output

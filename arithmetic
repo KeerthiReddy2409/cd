@@ -1,0 +1,70 @@
+#.l
+
+%{
+#include<stdio.h>
+#include<stdlib.h>
+#include "y.tab.h"
+%}
+
+%%
+[0-9]+ { yylval = atoi(yytext); return NUMBER; }
+[ \t]  ;
+\n     return 0;
+.      return yytext[0];
+%%
+
+int yywrap()
+{
+    return 1;
+}
+
+#.y
+
+%{
+#include<stdio.h>
+
+int flag = 0;
+int yylex();
+void yyerror();
+%}
+
+%token NUMBER
+%left '+' '-'
+%left '*' '/' '%'
+%left '(' ')'
+
+%%
+S : E { printf("\nValid Arithmetic Expression\n"); }
+ ;
+
+E : E '+' E
+  | E '-' E
+  | E '*' E
+  | E '/' E
+  | E '%' E
+  | '(' E ')'
+  | NUMBER
+ ;
+%%
+
+int main()
+{
+    printf("Enter Arithmetic Expression:\n");
+    yyparse();
+
+    if(flag == 0)
+        printf("\nExpression is Valid\n");
+}
+
+void yyerror()
+{
+    printf("\nExpression is Invalid\n");
+    flag = 1;
+}
+
+#run
+
+// lex filename.l
+// yacc -d filename.y
+// gcc lex.yy.c y.tab.c -o output
+// ./output

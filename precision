@@ -1,0 +1,25 @@
+%{
+#include <stdio.h>
+%}
+
+%%
+[0-9]+\.[0-9]+ { printf("Complete real number with precision\n"); }
+[0-9]+         { printf("Does not have precision\n"); }
+\n             ;
+.              ;
+%%
+
+int main()
+{
+    yylex();
+    return 0;
+}
+
+int yywrap()
+{
+    return 1;
+}
+
+#lex file.l
+#gcc lex.yy.c -o output -lfl
+#./output
